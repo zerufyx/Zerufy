@@ -90,14 +90,14 @@ html,body{background:#000;color:#fff;font-family:'Montserrat',sans-serif;font-we
 #pModal{position:fixed;inset:0;z-index:900;display:none;align-items:flex-end;}
 #pModal.open{display:flex;}
 #pModalBg{position:absolute;inset:0;background:rgba(0,0,0,.85);}
-#pModalBox{position:relative;z-index:1;width:100%;max-width:520px;margin:0 auto;background:#0f0f0f;border-top:1px solid rgba(232,53,42,.3);border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
+#pModalBox{position:relative;z-index:1;width:100%;max-width:520px;margin:0 auto;background:#0f0f0f;border-top:1px solid rgba(232,53,42,.3);border-radius:20px 20px 0 0;height:92vh;overflow-y:auto;animation:slideUp .3s ease;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 #pModalClose{position:absolute;top:.8rem;right:.8rem;background:rgba(0,0,0,.7);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;}
 
 /* MODAL PHOTOS */
 .m-photos{position:relative;background:#000;overflow:hidden;}
 .m-track{display:flex;}
-.m-track img{width:100%;min-width:100%;height:55vw;max-height:320px;object-fit:cover;display:block;flex-shrink:0;}
+.m-track img{width:100%;min-width:100%;height:50vh;object-fit:contain;display:block;flex-shrink:0;background:#000;}
 .m-dots{position:absolute;bottom:.5rem;left:50%;transform:translateX(-50%);display:flex;gap:.4rem;}
 .m-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;border:none;transition:background .2s;}
 .m-dot.active{background:#fff;}
