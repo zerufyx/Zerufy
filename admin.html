@@ -188,8 +188,20 @@ select option { background:#1a1a1a; }
         <input type="number" id="fDescuento" placeholder="35">
       </div>
       <div class="form-group full">
-        <label>Descripción</label>
-        <input type="text" id="fDesc" placeholder="Material, color, detalles">
+        <label>Descripción breve EN (aparece en la tarjeta)</label>
+        <input type="text" id="fDescBreve" placeholder="Short description in English">
+      </div>
+      <div class="form-group full">
+        <label>Descripción breve ES (aparece en la tarjeta)</label>
+        <input type="text" id="fDescBreveEs" placeholder="Descripción corta en español">
+      </div>
+      <div class="form-group full">
+        <label>Descripción completa EN (aparece en el modal)</label>
+        <input type="text" id="fDesc" placeholder="Full description in English">
+      </div>
+      <div class="form-group full">
+        <label>Descripción completa ES (aparece en el modal)</label>
+        <input type="text" id="fDescEs" placeholder="Descripción completa en español">
       </div>
       <div class="form-group full" id="medidasGroup" style="display:none;">
         <label>Medidas / Tallas disponibles</label>
@@ -416,11 +428,17 @@ async function saveProduct() {
     let photoUrls = [...existingPhotos];
     for (const file of pendingFiles) { photoUrls.push(await uploadImage(file)); }
 
+    const descBreve = document.getElementById('fDescBreve').value.trim();
+    const descBreveEs = document.getElementById('fDescBreveEs').value.trim();
+    const descEs = document.getElementById('fDescEs').value.trim();
     const product = {
       nombre, categoria,
       precio: precio || null,
       discount_price: descuento || null,
       descripcion: desc,
+      descripcion_es: descEs || null,
+      descripcion_breve: descBreve || null,
+      descripcion_breve_es: descBreveEs || null,
       medidas: medidas || null,
       fotos: photoUrls,
       featured, is_new, sold_out, hidden,
@@ -540,6 +558,9 @@ function editProduct(id) {
   document.getElementById('fPrecio').value = p.precio || '';
   document.getElementById('fDescuento').value = p.discount_price || '';
   document.getElementById('fDesc').value = p.descripcion || '';
+  document.getElementById('fDescEs').value = p.descripcion_es || '';
+  document.getElementById('fDescBreve').value = p.descripcion_breve || '';
+  document.getElementById('fDescBreveEs').value = p.descripcion_breve_es || '';
   document.getElementById('fMedidas').value = p.medidas || '';
   document.getElementById('fFeatured').checked = p.featured || false;
   document.getElementById('fIsNew').checked = p.is_new || false;
@@ -566,7 +587,7 @@ async function deleteProduct(id, nombre) {
 function resetForm() {
   editingId = null; existingPhotos = []; pendingFiles = [];
   document.getElementById('formTitle').textContent = '+ Agregar Producto';
-  ['fNombre','fPrecio','fDescuento','fDesc','fMedidas','fFotos'].forEach(id => document.getElementById(id).value = '');
+  ['fNombre','fPrecio','fDescuento','fDesc','fDescEs','fDescBreve','fDescBreveEs','fMedidas','fFotos'].forEach(id => document.getElementById(id).value = '');
   ['fFeatured','fIsNew','fSoldOut','fHidden'].forEach(id => document.getElementById(id).checked = false);
   ['featuredVal','isNewVal','soldOutVal','hiddenVal'].forEach(id => document.getElementById(id).textContent = 'NO');
   document.getElementById('photoPreviews').innerHTML = '';
