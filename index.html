@@ -113,11 +113,11 @@ html,body{background:#000;color:#fff;font-family:'Montserrat',sans-serif;font-we
 .m-medidas-val{font-size:.75rem;color:#ccc;}
 .m-btn{width:100%;padding:.9rem;border-radius:3px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;border:none;text-align:center;display:block;margin-bottom:.6rem;text-decoration:none;}
 .m-btn-cart{background:var(--red);color:#fff;}
-.m-btn-wa{background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+.m-btn-wa{background:#111;border:1px solid rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;gap:.5rem;}
 .m-btn-off{background:#1a1a1a;color:#444;cursor:not-allowed;}
 
 /* CART */
-.wa-float{position:fixed;bottom:2rem;right:1.2rem;z-index:200;background:#25D366;color:#fff;padding:1rem;border-radius:50%;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,.3);}
+.wa-float{position:fixed;bottom:2rem;right:1.2rem;z-index:200;background:#111;border:1px solid rgba(255,255,255,.15);color:#fff;padding:1rem;border-radius:50%;text-decoration:none;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.3);}
 .wa-float svg{width:22px;height:22px;fill:#fff;}
 .cart-fab{position:fixed;bottom:5.5rem;right:1.2rem;z-index:300;background:#000;border:1px solid rgba(232,53,42,.5);border-radius:50px;padding:.65rem 1rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;}
 .cart-badge{background:var(--red);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:.9rem;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
@@ -327,9 +327,11 @@ function renderCatalog(products) {
         if (p.featured) html += '<div class="badge-featured">⭐ TOP</div>';
         html += '</div>';
         // Body
+        var briefDesc = lang==='es' ? (p.descripcion_breve_es||p.descripcion_breve||'') : (p.descripcion_breve||'');
         html += '<div class="card-body">';
         html += '<div class="card-cat">'+nameEn+'</div>';
         html += '<div class="card-name">'+p.nombre+'</div>';
+        if (briefDesc) html += '<div style="font-size:.65rem;color:#888;line-height:1.5;margin-bottom:.3rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+briefDesc+'</div>';
         if (p.discount_price && p.precio) {
           html += '<div><span class="card-price-old">$'+p.precio+'</span><span class="card-price">$'+p.discount_price+'</span></div>';
         } else if (p.precio) {
@@ -387,6 +389,8 @@ function openModal(id) {
   var catEn = CAT_EN[p.categoria]||p.categoria;
   var catEs = CAT_ES[p.categoria]||p.categoria;
   document.getElementById('mCat').textContent = lang==='es' ? catEs : catEn;
+  document.getElementById('mCat').setAttribute('data-en', catEn);
+  document.getElementById('mCat').setAttribute('data-es', catEs);
   document.getElementById('mName').textContent = p.nombre;
 
   // Price
@@ -400,9 +404,10 @@ function openModal(id) {
   }
   document.getElementById('mPrice').innerHTML = priceHtml;
 
-  // Desc
+  // Desc - use language version
   var descEl = document.getElementById('mDesc');
-  if (p.descripcion) { descEl.textContent = p.descripcion; descEl.style.display='block'; }
+  var fullDesc = lang==='es' ? (p.descripcion_es||p.descripcion||'') : (p.descripcion||'');
+  if (fullDesc) { descEl.textContent = fullDesc; descEl.style.display='block'; }
   else { descEl.style.display='none'; }
 
   // Medidas
@@ -463,6 +468,12 @@ function setLang(l, btn) {
   lang = l;
   document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active',b.textContent.toLowerCase()===l); });
   document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent=el.getAttribute('data-'+l)||el.textContent; });
+  // If modal is open, refresh it
+  if (curProduct && document.getElementById('pModal').classList.contains('open')) {
+    openModal(curProduct.id);
+  }
+  // Re-render catalog with new language for brief descriptions
+  if (allProducts.length) renderCatalog(allProducts);
 }
 
 // FILTER
