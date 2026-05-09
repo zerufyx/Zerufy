@@ -198,7 +198,7 @@ select option { background:#1a1a1a; }
       <div class="form-group full">
         <label>Fotos (puedes subir varias)</label>
         <div class="photo-area">
-          <input type="file" id="fFotos" accept="image/*" multiple onchange="previewPhotos(this)">
+          <input type="file" id="fFotos" accept="image/*" multiple onchange="previewPhotos(this)" max="2">
           <div style="font-size:1.5rem;margin-bottom:.3rem;">📷</div>
           <div class="photo-area-text">Toca para subir fotos</div>
         </div>
@@ -315,7 +315,7 @@ async function uploadImage(file) {
     headers:{ 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':file.type, 'Cache-Control':'3600' },
     body: file
   });
-  if (!res.ok) throw new Error('Upload failed');
+  if (!res.ok) throw new Error('Upload failed: ' + await res.text());
   return SUPABASE_URL + '/storage/v1/object/public/zerufy-products/' + name;
 }
 
@@ -371,7 +371,14 @@ function updateToggle(id, valId) {
 
 // PHOTOS
 function previewPhotos(input) {
-  pendingFiles = Array.from(input.files);
+  var files = Array.from(input.files);
+  var total = existingPhotos.length + pendingFiles.length + files.length;
+  if (total > 2) {
+    alert('Máximo 2 fotos por producto');
+    input.value = '';
+    return;
+  }
+  pendingFiles = [...pendingFiles, ...files];
   renderPreviews();
 }
 function renderPreviews() {
