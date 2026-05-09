@@ -148,8 +148,8 @@
     .prod-modal-overlay.open { display:flex; }
     .prod-modal { width:100%; max-width:480px; margin:0 auto; background:#0f0f0f; border-top:1px solid rgba(232,53,42,.3); border-radius:20px 20px 0 0; max-height:90vh; overflow-y:auto; animation:slideUp .3s ease; }
     .prod-modal-photos { position:relative; background:#000; overflow:hidden; }
-    .prod-modal-track { display:flex; transition:transform .3s ease; width:100%; overflow:hidden; }
-    .prod-modal-track img { min-width:100%; width:100%; height:300px; object-fit:cover; display:block; flex-shrink:0; background:#000; }
+    .prod-modal-track { display:flex; transition:transform .3s ease; }
+    .prod-modal-track img { min-width:100vw; width:100vw; height:60vw; max-height:350px; object-fit:cover; display:block; flex-shrink:0; background:#000; }
     .prod-modal-dots { position:absolute; bottom:.5rem; left:50%; transform:translateX(-50%); display:flex; gap:.4rem; }
     .prod-modal-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.35); cursor:pointer; }
     .prod-modal-dot.active { background:#fff; }
@@ -298,6 +298,7 @@ async function loadProducts() {
 }
 
 function renderCatalog(products) {
+  allProductsCache = products;
   const catalog = document.getElementById('catalog');
   if (!products.length) {
     catalog.innerHTML = '<div style="text-align:center;padding:5rem;color:#333;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;">Catálogo en construcción — vuelve pronto</div>';
@@ -321,47 +322,37 @@ function renderCatalog(products) {
       catProducts.forEach(function(p, idx) {
         const fotos = p.fotos || [];
         const price = p.precio ? '$' + p.precio : null;
-        const sliderKey = 'sl-' + p.id;
         var soldOut = p.sold_out ? ' sold-out' : '';
-        html += '<div class="product-card' + soldOut + '" data-product-index="' + (idx+1) + '" data-product-cat="' + cat + '">';
 
-        if (fotos.length > 1) {
-          // Slider
-          const slides = fotos.map(function(f){ return '<img src="' + f + '" loading="lazy">'; }).join('');
-          const dots = fotos.map(function(_,i){ return '<div class="card-slider-dot' + (i===0?' active':'') + '"></div>'; }).join('');
-          html += '<div class="card-slider" id="' + sliderKey + '" onclick="slOpen(\'' + sliderKey + '\')">';
-          html += '<div class="card-slider-track">' + slides + '</div>';
-          if (fotos.length > 1) html += '<div class="card-slider-dots">' + dots + '</div>';
+        // Badges
+        var badges = '';
+        if (p.sold_out) badges += '<div class="badge-wrap"><span class="badge-sold">SOLD OUT</span></div>';
+        else if (p.is_new) badges += '<div class="badge-wrap"><span class="badge-new">NEW</span></div>';
+        if (p.featured) badges += '<div class="badge-featured">⭐ TOP</div>';
+
+        html += '<div class="product-card' + soldOut + '" data-product-index="' + (idx+1) + '" data-product-cat="' + cat + '" onclick="openProdById(' + p.id + ')" style="cursor:pointer;">';
+
+        // Photo
+        if (fotos.length >= 1) {
+          html += '<div style="position:relative;">';
+          html += '<img src="' + fotos[0] + '" loading="lazy" style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block;">';
+          html += badges;
           html += '</div>';
-        } else if (fotos.length === 1) {
-          html += '<img class="card-img-single" src="' + fotos[0] + '" loading="lazy" onclick="lbOpen([\'' + fotos[0] + '\'],0)">';
         } else {
           html += '<div class="card-img-placeholder"><span>📷</span><span>Sin foto</span></div>';
         }
 
+        // Card body - only name and price
         html += '<div class="card-body">';
-        html += '<p class="card-category" data-en="' + catName.en + '" data-es="' + catName.es + '">' + catName.en + '</p>';
+        html += '<p class="card-category">' + catName.en + '</p>';
         html += '<h3 class="card-name">' + p.nombre + '</h3>';
-        if (p.descripcion) html += '<p class="card-desc">' + p.descripcion + '</p>';
         html += '<div class="card-footer">';
-
-        if (price) {
-          if (p.discount_price) {
-            html += '<div class="card-price-wrap"><span class="card-price-original">$' + p.precio + '</span><span class="card-price">$' + p.discount_price + '</span></div>';
-          } else {
-            html += '<span class="card-price">' + price + '</span>';
-          }
+        if (p.discount_price && p.precio) {
+          html += '<div style="display:flex;align-items:baseline;gap:.4rem;"><span class="card-price" style="font-size:1rem;color:#555;text-decoration:line-through;">$' + p.precio + '</span><span class="card-price">$' + p.discount_price + '</span></div>';
+        } else if (price) {
+          html += '<span class="card-price">' + price + '</span>';
         } else {
-          html += '<span class="card-price no-price" data-en="Ask for price" data-es="Consultar precio">Ask for price</span>';
-        }
-        const msgEn = 'Hi Zerufy! I\'m interested in ' + p.nombre + ' #' + (idx+1) + '. Is it available?';
-        const msgEs = 'Hola Zerufy! Me interesa ' + p.nombre + ' #' + (idx+1) + '. ¿Está disponible?';
-        if (p.sold_out) {
-          html += '<button class="card-add-btn" disabled>Sold Out</button>';
-          html += '<span class="card-ask" style="border-color:rgba(255,255,255,.08);color:#333;">No disponible</span>';
-        } else {
-          html += '<button class="card-add-btn" onclick="cartAdd(this)">+ Cart</button>';
-          html += '<a class="card-ask" data-en="Inquire" data-es="Consultar" data-msg-en="' + msgEn + '" data-msg-es="' + msgEs + '" href="https://wa.me/14072833785?text=' + encodeURIComponent(msgEn) + '" target="_blank">Inquire</a>';
+          html += '<span class="card-price no-price">Ask for price</span>';
         }
         html += '</div></div></div>';
       });
@@ -520,6 +511,96 @@ if (savedCats) {
   });
 }
 loadProducts();
+
+  // PRODUCT MODAL
+  var modalCur = 0, modalSrcs = [], modalSx = 0;
+  var currentProduct = null;
+
+  function openProdById(id) {
+    var p = allProductsCache.find(function(x){ return x.id === id; });
+    if (!p) return;
+    var catName = (CAT_NAMES[p.categoria] && CAT_NAMES[p.categoria].en) || p.categoria;
+    openProdModal(p, catName);
+  }
+
+  function openProdModal(p, catName) {
+    currentProduct = p;
+    modalSrcs = p.fotos || [];
+    modalCur = 0;
+    var track = document.getElementById('modalTrack');
+    track.innerHTML = modalSrcs.map(function(s){ return '<img src="'+s+'" alt="">'; }).join('');
+    track.style.transform = 'translateX(0vw)';
+    var dots = document.getElementById('modalDots');
+    dots.innerHTML = modalSrcs.map(function(_,i){
+      return '<div class="prod-modal-dot'+(i===0?' active':'')+'" onclick="modalGo('+i+')"></div>';
+    }).join('');
+    document.getElementById('modalPhotos').style.display = modalSrcs.length ? 'block' : 'none';
+    document.getElementById('modalCat').textContent = catName;
+    document.getElementById('modalName').textContent = p.nombre;
+    var priceWrap = document.getElementById('modalPriceWrap');
+    if (p.discount_price && p.precio) {
+      priceWrap.innerHTML = '<div style="display:flex;align-items:baseline;gap:.6rem;margin-bottom:.8rem;"><span style="font-family:Bebas Neue,sans-serif;font-size:1rem;color:#555;text-decoration:line-through;">$'+p.precio+'</span><span style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;color:#e8352a;">$'+p.discount_price+'</span></div>';
+    } else if (p.precio) {
+      priceWrap.innerHTML = '<div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;color:#e8352a;margin-bottom:.8rem;">$'+p.precio+'</div>';
+    } else {
+      priceWrap.innerHTML = '<div style="font-size:.75rem;color:#888;letter-spacing:.15em;margin-bottom:.8rem;">Consultar precio</div>';
+    }
+    var descEl = document.getElementById('modalDesc');
+    descEl.textContent = p.descripcion || '';
+    descEl.style.display = p.descripcion ? 'block' : 'none';
+    var medEl = document.getElementById('modalMedidas');
+    if (p.medidas) {
+      medEl.style.display = 'block';
+      document.getElementById('modalMedidasVal').textContent = p.medidas;
+    } else { medEl.style.display = 'none'; }
+    var actions = document.getElementById('modalActions');
+    var msgEn = 'Hi Zerufy! I am interested in ' + p.nombre + '. Is it available?';
+    if (p.sold_out) {
+      actions.innerHTML = '<div class="prod-modal-btn prod-modal-btn-disabled">Sold Out — No disponible</div>';
+    } else {
+      actions.innerHTML =
+        '<button class="prod-modal-btn prod-modal-btn-cart" onclick="modalAddCart()">+ Agregar al carrito</button>' +
+        '<a class="prod-modal-btn prod-modal-btn-wa" href="https://wa.me/14072833785?text='+encodeURIComponent(msgEn)+'" target="_blank">💬 Consultar por WhatsApp</a>';
+    }
+    document.getElementById('prodModalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function modalGo(idx) {
+    modalCur = idx;
+    document.getElementById('modalTrack').style.transform = 'translateX(-'+(idx*100)+'vw)';
+    document.querySelectorAll('.prod-modal-dot').forEach(function(d,i){ d.classList.toggle('active',i===idx); });
+  }
+
+  function closeProdModal() {
+    document.getElementById('prodModalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function modalAddCart() {
+    if (!currentProduct) return;
+    var p = currentProduct;
+    var price = p.discount_price || p.precio || 0;
+    cart.push({id:Date.now(), name:p.nombre, cat:(CAT_NAMES[p.categoria]&&CAT_NAMES[p.categoria].en)||p.categoria, price:parseFloat(price)||0, pd:price?'$'+price:'Ask for price'});
+    cartRender();
+    var btn = document.querySelector('.prod-modal-btn-cart');
+    if (btn) { btn.textContent = '✓ Agregado!'; setTimeout(function(){ btn.textContent = '+ Agregar al carrito'; },1200); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var overlay = document.getElementById('prodModalOverlay');
+    if (overlay) overlay.addEventListener('click', function(e){ if(e.target===this) closeProdModal(); });
+    var modal = document.getElementById('prodModal');
+    if (modal) {
+      modal.addEventListener('touchstart', function(e){ modalSx=e.touches[0].clientX; },{passive:true});
+      modal.addEventListener('touchend', function(e){
+        var diff = modalSx - e.changedTouches[0].clientX;
+        if (Math.abs(diff)>40 && modalSrcs.length>1) modalGo((modalCur+(diff>0?1:-1)+modalSrcs.length)%modalSrcs.length);
+      },{passive:true});
+    }
+  });
+
+
 </script>
 <div class="prod-modal-overlay" id="prodModalOverlay" onclick="if(event.target===this)closeProdModal()">
   <div class="prod-modal" id="prodModal">
