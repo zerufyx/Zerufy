@@ -327,26 +327,20 @@ function catName(cat) {
   return (TEXTS[lang].cats[cat] || TEXTS['en'].cats[cat] || cat);
 }
 
-// TRANSLATE via Claude API
-async function translateText(text) {
-  if (!text || lang === 'en') return text;
-  if (txCache[text]) return txCache[text];
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{role:'user', content:'Translate this to Spanish. Return ONLY the translation, no quotes, no explanation: ' + text}]
-      })
-    });
-    const data = await res.json();
-    var translated = data.content && data.content[0] ? data.content[0].text.trim() : text;
-    txCache[text] = translated;
-    return translated;
-  } catch(e) { return text; }
-}
+// TRANSLATE via Google Translate
+  async function translateText(text) {
+    if (!text || lang === 'en') return text;
+    if (txCache[text]) return txCache[text];
+    try {
+      var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=' + encodeURIComponent(text);
+      var res = await fetch(url);
+      var data = await res.json();
+      var translated = '';
+      if (data && data[0]) { data[0].forEach(function(x){ if(x[0]) translated += x[0]; }); }
+      if (translated) txCache[text] = translated;
+      return translated || text;
+    } catch(e) { return text; }
+  }
 
 // LOAD
 async function loadProducts() {
@@ -396,7 +390,7 @@ function renderCatalog() {
         html += '</div>';
         html += '<div class="card-body">';
         html += '<div class="card-cat" id="ccat-'+p.id+'">'+catName(cat)+'</div>';
-        html += '<div class="card-name">'+p.nombre+'</div>';
+        html += '<div class="card-name" id="cname-'+p.id+'">'+p.nombre+'</div>';
         if (p.descripcion_breve) html += '<div class="card-brief" id="cbrief-'+p.id+'">'+p.descripcion_breve+'</div>';
         html += '<div class="card-footer">';
         if (p.discount_price && p.precio) {
