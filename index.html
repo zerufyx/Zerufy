@@ -332,7 +332,7 @@ function renderCatalog(products) {
         html += '</div>';
         // Body
         html += '<div class="card-body">';
-        html += '<div class="card-cat">'+nameEn+'</div>';
+        html += '<div class="card-cat" data-en="'+nameEn+'" data-es="'+nameEs+'">'+(lang==='es'?nameEs:nameEn)+'</div>';
         html += '<div class="card-name">'+p.nombre+'</div>';
         if (p.descripcion_breve) html += '<div class="card-brief" id="brief-'+p.id+'">'+p.descripcion_breve+'</div>';
         if (p.discount_price && p.precio) {
@@ -340,7 +340,7 @@ function renderCatalog(products) {
         } else if (p.precio) {
           html += '<div class="card-price">$'+p.precio+'</div>';
         } else {
-          html += '<div class="card-price no-price" data-en="Ask for price" data-es="Consultar precio">Ask for price</div>';
+          html += '<div class="card-price no-price" data-en="Ask for price" data-es="Consultar precio">'+(lang==='es'?'Consultar precio':'Ask for price')+'</div>';
         }
         html += '</div></div>';
       });
@@ -470,15 +470,17 @@ function modalCart() {
 function setLang(l, btn) {
   lang = l;
   document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active',b.textContent.toLowerCase()===l); });
-  document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent=el.getAttribute('data-'+l)||el.textContent; });
+  // Re-render catalog with correct language
+  if (allProducts.length) renderCatalog(allProducts);
+  // Translate static elements
+  document.querySelectorAll('[data-en]').forEach(function(el){
+    if (!el.children.length) el.textContent = el.getAttribute('data-'+l)||el.textContent;
+  });
   // Translate descriptions
   translatePage(l);
-  // If modal is open, refresh it with translation
+  // If modal is open, refresh it
   if (curProduct && document.getElementById('pModal').classList.contains('open')) {
-    translateText(curProduct.descripcion||'', l).then(function(t){
-      var descEl = document.getElementById('mDesc');
-      if (descEl) descEl.textContent = t;
-    });
+    openModal(curProduct.id);
   }
 }
 
