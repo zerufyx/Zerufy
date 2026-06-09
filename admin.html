@@ -200,7 +200,7 @@ select option { background:#1a1a1a; }
         <input type="text" id="fMedidas" placeholder="Ej: US 9, US 10, US 11 — o 22cm, 24cm">
       </div>
       <div class="form-group full">
-        <label>Fotos (puedes subir varias)</label>
+        <label>Fotos (máximo 3)</label>
         <div class="photo-area">
           <input type="file" id="fFotos" accept="image/*" multiple onchange="previewPhotos(this)" max="2">
           <div style="font-size:1.5rem;margin-bottom:.3rem;">📷</div>
@@ -268,10 +268,11 @@ const SUPABASE_URL = 'https://drkcstmcdscklcrefxbs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_k4jAuf7UCzpT_kp2jSpW-A_1ICXHA2s';
 const ADMIN_PASS = 'zerufy2024';
 
-const DEFAULT_CATS = ['caps','wallets','shoes','belts','bags','watches','jewelry'];
+const DEFAULT_CATS = ['bags','wallets','shoes','clothes','belts','caps','watches','sunglasses','jewelry','electronics'];
 const CAT_NAMES = {
-  caps:'Gorras',wallets:'Billeteras',shoes:'Zapatos',belts:'Cinturones',
-  bags:'Bolsos',watches:'Relojes',jewelry:'Joyería'
+  caps:'Caps',wallets:'Wallets',shoes:'Shoes',belts:'Belts',
+  bags:'Bags',watches:'Watches',jewelry:'Jewelry',clothes:'Clothes',
+  sunglasses:'Sunglasses',electronics:'Electronics'
 };
 
 let categories = JSON.parse(localStorage.getItem('zerufyCategories') || 'null') || [...DEFAULT_CATS];
@@ -326,8 +327,15 @@ async function uploadImage(file) {
 // CATEGORIES
 function renderCategories() {
   const list = document.getElementById('catList');
-  list.innerHTML = categories.map(cat =>
-    `<div class="cat-tag">${CAT_NAMES[cat]||cat}<button class="cat-tag-del" onclick="removeCategory('${cat}')">✕</button></div>`
+  list.innerHTML = categories.map((cat, i) =>
+    `<div class="cat-tag" data-cat="${cat}" style="display:flex;align-items:center;gap:.4rem;">
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <button onclick="catMove('${cat}',-1)" style="background:none;border:none;color:#666;cursor:pointer;font-size:.7rem;padding:0;line-height:1;" ${i===0?'disabled':''}>▲</button>
+        <button onclick="catMove('${cat}',1)" style="background:none;border:none;color:#666;cursor:pointer;font-size:.7rem;padding:0;line-height:1;" ${i===categories.length-1?'disabled':''}>▼</button>
+      </div>
+      <span>${CAT_NAMES[cat]||cat}</span>
+      <button class="cat-tag-del" onclick="removeCategory('${cat}')">✕</button>
+    </div>`
   ).join('');
   // Update selects
   const catSelect = document.getElementById('fCategoria');
@@ -335,6 +343,19 @@ function renderCategories() {
   const opts = categories.map(cat => `<option value="${cat}">${CAT_NAMES[cat]||cat}</option>`).join('');
   catSelect.innerHTML = opts;
   filterSelect.innerHTML = '<option value="all">Todas las categorías</option>' + opts;
+}
+
+// CATEGORY MOVE UP/DOWN
+function catMove(cat, dir) {
+  var idx = categories.indexOf(cat);
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= categories.length) return;
+  var reordered = [...categories];
+  reordered.splice(idx, 1);
+  reordered.splice(newIdx, 0, cat);
+  categories = reordered;
+  localStorage.setItem('zerufyCategories', JSON.stringify(categories));
+  renderCategories();
 }
 
 function addCategory() {
@@ -377,8 +398,8 @@ function updateToggle(id, valId) {
 function previewPhotos(input) {
   var files = Array.from(input.files);
   var total = existingPhotos.length + pendingFiles.length + files.length;
-  if (total > 2) {
-    alert('Máximo 2 fotos por producto');
+  if (total > 3) {
+    alert('Máximo 3 fotos por producto');
     input.value = '';
     return;
   }
