@@ -364,7 +364,7 @@ function renderCatalog() {
   var html = '';
   CATS.forEach(function(cat) {
     var prods = allProducts.filter(function(p){ return p.categoria===cat; });
-    prods.sort(function(a,b){ return (b.featured?1:0)-(a.featured?1:0); });
+
     var cName = TEXTS['en'].cats[cat] || cat;
     html += '<div class="category-section" data-cat="'+cat+'">';
     html += '<div class="cat-banner"><div class="cat-banner-bg"><div class="cat-banner-left">';
