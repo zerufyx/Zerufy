@@ -266,10 +266,10 @@ var txCache = {};
 var translating = false;
 
 // CATEGORIES
-const CATS = ['caps','wallets','shoes','belts','bags','watches','sunglasses','jewelry'];
+const CATS = ['bags','wallets','shoes','clothes','belts','caps','watches','sunglasses','jewelry','electronics'];
 const TEXTS = {
   en: {
-    cats: {caps:'Caps',wallets:'Wallets',shoes:'Shoes',belts:'Belts',bags:'Bags',watches:'Watches',sunglasses:'Sunglasses',jewelry:'Jewelry'},
+    cats: {caps:'Caps',wallets:'Wallets',shoes:'Shoes',belts:'Belts',bags:'Bags',watches:'Watches',sunglasses:'Sunglasses',jewelry:'Jewelry',clothes:'Clothes',electronics:'Electronics'},
     newCol: 'New Collection',
     heroTag: 'Exclusive Collection',
     heroScroll: 'View Catalog',
@@ -292,7 +292,7 @@ const TEXTS = {
     viewDetails: 'View details →',
   },
   es: {
-    cats: {caps:'Gorras',wallets:'Billeteras',shoes:'Zapatos',belts:'Cinturones',bags:'Bolsos',watches:'Relojes',sunglasses:'Lentes',jewelry:'Joyería'},
+    cats: {caps:'Gorras',wallets:'Billeteras',shoes:'Zapatos',belts:'Cinturones',bags:'Bolsos',watches:'Relojes',sunglasses:'Lentes',jewelry:'Joyería',clothes:'Ropa',electronics:'Electrónicos'},
     newCol: 'Nueva Colección',
     heroTag: 'Colección Exclusiva',
     heroScroll: 'Ver Catálogo',
@@ -319,10 +319,9 @@ const TEXTS = {
 // Load custom categories
 var savedCats = JSON.parse(localStorage.getItem('zerufyCategories')||'null');
 var savedCatNames = JSON.parse(localStorage.getItem('zerufyCatNames')||'null');
-// Use saved category ORDER if available
+// Add any custom categories not already in list
 if (savedCats && savedCats.length) {
-  CATS.length = 0;
-  savedCats.forEach(function(c){ CATS.push(c); });
+  savedCats.forEach(function(c){ if(!CATS.includes(c)) CATS.push(c); });
 }
 
 function t(key) { return TEXTS[lang][key] || TEXTS['en'][key] || key; }
