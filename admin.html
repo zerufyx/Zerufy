@@ -196,8 +196,8 @@ select option { background:#1a1a1a; }
         <input type="text" id="fDesc" placeholder="Ej: Handcrafted with premium leather, gold-plated hardware, adjustable strap...">
       </div>
       <div class="form-group full" id="medidasGroup" style="display:none;">
-        <label>Medidas / Tallas disponibles</label>
-        <input type="text" id="fMedidas" placeholder="Ej: US 9, US 10, US 11 — o 22cm, 24cm">
+        <label id="medidasLabel">Medidas / Tallas disponibles</label>
+        <input type="text" id="fMedidas" placeholder="Ej: S, M, L, XL — o US 9, 10, 11 — o 110cm, 115cm">
       </div>
       <div class="form-group full">
         <label>Fotos (máximo 3)</label>
@@ -384,8 +384,18 @@ function removeCategory(cat) {
 // MEDIDAS - show only for certain categories
 function checkMedidas() {
   const cat = document.getElementById('fCategoria').value;
-  const showFor = ['shoes','jewelry','belts'];
+  const showFor = ['shoes','jewelry','belts','clothes','watches','electronics'];
   document.getElementById('medidasGroup').style.display = showFor.includes(cat) ? 'flex' : 'none';
+  const placeholders = {
+    shoes: 'Ej: US 7, US 8, US 9, US 10',
+    clothes: 'Ej: S, M, L, XL, XXL',
+    belts: 'Ej: 100cm, 105cm, 110cm, 115cm',
+    watches: 'Ej: 38mm, 40mm, 42mm',
+    jewelry: 'Ej: 45cm, 50cm, 55cm — o talla única',
+    electronics: 'Ej: Talla única — o especificación'
+  };
+  const input = document.getElementById('fMedidas');
+  if (placeholders[cat]) input.placeholder = placeholders[cat];
 }
 
 // TOGGLES
