@@ -364,21 +364,32 @@ function renderCatalog() {
   var html = '';
   CATS.forEach(function(cat) {
     var prods = allProducts.filter(function(p){ return p.categoria===cat; });
-
-    var cName = TEXTS['en'].cats[cat] || cat;
+    prods.sort(function(a,b){ return (b.featured?1:0)-(a.featured?1:0); });
     html += '<div class="category-section" data-cat="'+cat+'">';
     html += '<div class="cat-banner"><div class="cat-banner-bg"><div class="cat-banner-left">';
     html += '<div class="cat-banner-label" id="label-'+cat+'">'+t('newCol')+'</div>';
     html += '<div class="cat-banner-title" id="title-'+cat+'">'+catName(cat)+'</div>';
     html += '</div><div class="cat-banner-line"></div></div></div>';
-    html += '<div class="product-grid">';
+
+    // Build subcategory tabs
+    var subcats = [];
+    prods.forEach(function(p){ if(p.subcategoria && !subcats.includes(p.subcategoria)) subcats.push(p.subcategoria); });
+    if (subcats.length > 1) {
+      html += '<div class="subcat-tabs" id="subtabs-'+cat+'">';
+      html += '<button class="subcat-tab active" onclick="filterSubcat(''+cat+'','all',this)">All</button>';
+      subcats.forEach(function(sub){
+        html += '<button class="subcat-tab" onclick="filterSubcat(''+cat+'',''+sub+'',this)">'+sub+'</button>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="product-grid" id="grid-'+cat+'">';
     if (!prods.length) {
       html += '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#333;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;" id="soon-'+cat+'">'+t('comingSoon')+'</div>';
     } else {
       prods.forEach(function(p, i) {
         var fotos = p.fotos||[];
         var soldCls = p.sold_out ? ' style="opacity:.75"' : '';
-        html += '<div class="product-card" onclick="openModal('+p.id+')"'+soldCls+'>';
+        html += '<div class="product-card" onclick="openModal('+p.id+')" data-subcat="'+(p.subcategoria||'')+'"'+soldCls+'>';
         html += '<div class="card-img-wrap">';
         if (fotos.length) {
           html += '<img src="'+fotos[0]+'" loading="lazy" alt="'+p.nombre+'">';
@@ -537,7 +548,16 @@ function openModal(id) {
   } else { descEl.style.display = 'none'; }
 
   var medEl = document.getElementById('mMedidas');
-  if (p.medidas) {
+  if (p.tallas && p.tallas.length) {
+    medEl.style.display = 'block';
+    document.getElementById('mMedidasLabel').textContent = t('sizes');
+    var chipsHtml = '<div class="sizes-chips">';
+    p.tallas.forEach(function(talla, i) {
+      chipsHtml += '<button class="size-chip'+(i===0?' active':'')+'" onclick="selectSize(this)">'+talla+'</button>';
+    });
+    chipsHtml += '</div>';
+    document.getElementById('mMedidasVal').innerHTML = chipsHtml;
+  } else if (p.medidas) {
     medEl.style.display = 'block';
     document.getElementById('mMedidasLabel').textContent = t('sizes');
     document.getElementById('mMedidasVal').textContent = p.medidas;
