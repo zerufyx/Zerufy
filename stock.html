@@ -21,6 +21,9 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padd
 .filters::-webkit-scrollbar{display:none;}
 .fchip{background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .8rem;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .fchip.on{background:var(--red);border-color:var(--red);color:#fff;}
+.cat-filters{padding-bottom:.1rem;}
+.cat-filters .fchip{background:var(--card2);font-size:.75rem;padding:.45rem .95rem;}
+.cat-filters .fchip.on{background:#fff;border-color:#fff;color:#000;}
 
 .search{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.6rem .85rem;margin:.7rem 1.1rem 0;display:flex;align-items:center;gap:.5rem;}
 .search input{background:none;border:none;color:var(--text);font-family:'Barlow',sans-serif;font-size:.82rem;outline:none;flex:1;}
@@ -119,6 +122,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padd
   </div>
 </div>
 
+<div class="filters cat-filters" id="catFilters"></div>
 <div class="filters" id="filters"></div>
 
 <div class="search">
@@ -162,6 +166,10 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padd
   <div class="new-sheet">
     <div class="sheet-handle"></div>
     <div class="ns-t">Nuevo Modelo</div>
+    <div class="ns-f"><label class="ns-l">Categoria</label>
+      <input class="ns-i" id="nCat" list="catList" placeholder="Ej: Zapatos, Camisetas, Relojes">
+      <datalist id="catList"></datalist>
+    </div>
     <div class="ns-f"><label class="ns-l">Modelo</label><input class="ns-i" id="nName" placeholder="Ej: LV Trainer"></div>
     <div class="ns-f"><label class="ns-l">Marca</label><input class="ns-i" id="nBrand" placeholder="Ej: Louis Vuitton"></div>
     <div class="sheet-btns" style="margin-top:.9rem">
@@ -181,6 +189,7 @@ try{ products=JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); }catch(e){ prod
 function save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(products)); }catch(e){ alert('No se pudo guardar'); } }
 
 var filterBrand='all';
+var filterCat='all';
 var sheetRef=null;
 
 function allBrands(){
@@ -189,11 +198,26 @@ function allBrands(){
   return b;
 }
 
+function allCats(){
+  var c=[];
+  products.forEach(function(p){ if(p.cat&&!c.includes(p.cat))c.push(p.cat); });
+  return c;
+}
+
+function renderCatFilters(){
+  var cs=allCats();
+  var out="<button class='fchip"+(filterCat==='all'?' on':'')+"' onclick=\"setCat('all')\">Todo</button>";
+  cs.forEach(function(c){ out+="<button class='fchip"+(filterCat===c?' on':'')+"' onclick=\"setCat('"+c+"')\">"+c+"</button>"; });
+  document.getElementById('catFilters').innerHTML=out;
+}
+function setCat(c){ filterCat=c; filterBrand='all'; render(); }
+
 function renderFilters(){
-  var bs=allBrands();
-  var h='<button class="fchip'+(filterBrand==='all'?' on':'')+'" onclick="setFilter(\'all\')">Todas</button>';
-  bs.forEach(function(b){ h+='<button class="fchip'+(filterBrand===b?' on':'')+'" onclick="setFilter(\''+b+'\')">'+b+'</button>'; });
-  document.getElementById('filters').innerHTML=h;
+  var bs=[];
+  products.forEach(function(p){ if((filterCat==='all'||p.cat===filterCat)&&p.brand&&!bs.includes(p.brand))bs.push(p.brand); });
+  var out="<button class='fchip"+(filterBrand==='all'?' on':'')+"' onclick=\"setFilter('all')\">Todas las marcas</button>";
+  bs.forEach(function(b){ out+="<button class='fchip"+(filterBrand===b?' on':'')+"' onclick=\"setFilter('"+b+"')\">"+b+"</button>"; });
+  document.getElementById('filters').innerHTML=out;
 }
 function setFilter(b){ filterBrand=b; render(); }
 
@@ -203,13 +227,19 @@ function totalUnits(){
   return t;
 }
 
-function openNew(){ document.getElementById('newBg').classList.add('on'); setTimeout(function(){document.getElementById('nName').focus();},100); }
-function closeNew(){ document.getElementById('newBg').classList.remove('on'); document.getElementById('nName').value=''; document.getElementById('nBrand').value=''; }
+function openNew(){
+  var dl=document.getElementById('catList');
+  if(dl){ dl.innerHTML=allCats().map(function(c){return '<option value="'+c+'">';}).join(''); }
+  document.getElementById('newBg').classList.add('on');
+  setTimeout(function(){document.getElementById('nName').focus();},100);
+}
+function closeNew(){ document.getElementById('newBg').classList.remove('on'); document.getElementById('nName').value=''; document.getElementById('nBrand').value=''; document.getElementById('nCat').value=''; }
 function createProd(){
   var n=document.getElementById('nName').value.trim();
   var b=document.getElementById('nBrand').value.trim();
   if(!n){document.getElementById('nName').focus();return;}
-  products.unshift({id:Date.now(),name:n,brand:b,vars:[]});
+  var cat=document.getElementById('nCat').value.trim()||'Otro';
+  products.unshift({id:Date.now(),name:n,brand:b,cat:cat,vars:[]});
   save(); closeNew(); render();
 }
 
@@ -262,13 +292,15 @@ function sheetDel(){
 }
 
 function render(){
+  renderCatFilters();
   renderFilters();
   document.getElementById('hTot').textContent=totalUnits();
   var q=document.getElementById('iSearch').value.toLowerCase();
   var filt=products.filter(function(p){
+    var okC=filterCat==='all'||p.cat===filterCat;
     var okB=filterBrand==='all'||p.brand===filterBrand;
     var okQ=!q||p.name.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q);
-    return okB&&okQ;
+    return okC&&okB&&okQ;
   });
 
   if(!filt.length){
@@ -295,7 +327,10 @@ function render(){
 
     h+='<div class="mx">';
     h+='<div class="mx-h"><div class="mx-info">';
-    if(p.brand)h+='<div class="mx-brand">'+p.brand+'</div>';
+    var bc=[];
+    if(p.cat)bc.push(p.cat);
+    if(p.brand)bc.push(p.brand);
+    if(bc.length)h+='<div class="mx-brand">'+bc.join(' · ')+'</div>';
     h+='<div class="mx-name">'+p.name+'</div></div>';
     h+='<div class="mx-right"><div class="mx-tot">'+tot+'</div>';
     h+='<button class="mx-del" onclick="delProd('+p.id+')">🗑</button></div></div>';
