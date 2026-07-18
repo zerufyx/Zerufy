@@ -39,6 +39,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padd
 .mx-del{background:none;border:none;color:#2e2e35;cursor:pointer;font-size:.72rem;padding:.15rem;}
 .mx-del:active{color:var(--red);}
 
+.th-size{display:inline-block;}
 .mx-scroll{overflow-x:auto;scrollbar-width:none;}
 .mx-scroll::-webkit-scrollbar{display:none;}
 .mx-table{border-collapse:collapse;width:100%;min-width:min-content;}
@@ -146,7 +147,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padd
     </div>
     <div class="sheet-qty">
       <button class="sq-btn" onclick="sheetQty(-1)">−</button>
-      <div class="sq-n" id="shQty">0</div>
+      <div style="text-align:center"><div class="sq-n" id="shQty">0</div><div style="font-size:.5rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-top:.2rem">En stock</div></div>
       <button class="sq-btn" onclick="sheetQty(1)">+</button>
     </div>
     <div class="sheet-btns">
@@ -240,7 +241,7 @@ function openSheet(pid,color,size){
   sheetRef={pid:pid,color:color,size:size};
   document.getElementById('shBrand').textContent=p.brand||'';
   document.getElementById('shName').textContent=p.name;
-  document.getElementById('shVar').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+hexFor(color)+';border:1px solid rgba(255,255,255,.2)"></span> '+color+' · '+size;
+  document.getElementById('shVar').innerHTML='<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+hexFor(color)+';border:1px solid rgba(255,255,255,.2)"></span> Color '+color+' &nbsp;·&nbsp; Talla '+size;
   document.getElementById('shQty').textContent=v.qty;
   document.getElementById('sheetBg').classList.add('on');
 }
@@ -301,7 +302,7 @@ function render(){
 
     if(colors.length&&sizes.length){
       h+='<div class="mx-scroll"><table class="mx-table"><thead><tr><th>Color</th>';
-      sizes.forEach(function(s){ h+='<th>'+s+'</th>'; });
+      sizes.forEach(function(s){ h+='<th><span class="th-size">'+s+'</span></th>'; });
       h+='</tr></thead><tbody>';
       colors.forEach(function(c){
         h+='<tr><td><div class="cl"><div class="cl-dot" style="background:'+hexFor(c)+'"></div><span class="cl-n">'+c+'</span></div></td>';
@@ -318,7 +319,7 @@ function render(){
 
     h+='<div class="mx-add"><div class="mx-add-row">';
     h+='<input class="mx-i" id="ac-'+p.id+'" placeholder="Color">';
-    h+='<input class="mx-i" id="as-'+p.id+'" placeholder="Talla">';
+    h+='<input class="mx-i" id="as-'+p.id+'" placeholder="Ej: US 9">';
     h+='<input class="mx-i" id="aq-'+p.id+'" type="number" value="1" min="1" inputmode="numeric" style="text-align:center">';
     h+='<button class="mx-btn" onclick="addVar('+p.id+')">ADD</button>';
     h+='</div></div>';
