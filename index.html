@@ -466,7 +466,16 @@ function openModal(id) {
     }).join('');
   } else sizesEl.style.display='none';
 
-  var msg = lang==='es'?'Hola Zerufy! Me interesa '+p.nombre+'. ¿Está disponible?':'Hi Zerufy! I am interested in '+p.nombre+'. Is it available?';
+  var fotoLink = (p.fotos && p.fotos.length) ? p.fotos[0] : '';
+  var precioTxt = p.precio ? ' — $'+(p.discount_price||p.precio) : '';
+  var msg;
+  if (lang==='es') {
+    msg = 'Hola Zerufy! 👋 Me interesa este producto:\n\n'+p.nombre+precioTxt+'\n\n¿Está disponible?';
+    if (fotoLink) msg += '\n\n🔗 Foto: '+fotoLink;
+  } else {
+    msg = 'Hi Zerufy! 👋 I am interested in this product:\n\n'+p.nombre+precioTxt+'\n\nIs it available?';
+    if (fotoLink) msg += '\n\n🔗 Photo: '+fotoLink;
+  }
   var ah = '';
   if (p.sold_out) ah='<div class="m-btn m-btn-off">'+t('soldOut')+' — No disponible</div>';
   else {
@@ -501,7 +510,7 @@ function quickCart(id){
   var p=allProducts.find(function(x){return x.id===id;});
   if(!p)return;
   var price=parseFloat(p.discount_price||p.precio||0);
-  cart.push({id:Date.now(),name:p.nombre,cat:cn(p.categoria),price:price,pd:price?'$'+price:t('askPrice')});
+  cart.push({id:Date.now(),name:p.nombre,cat:cn(p.categoria),price:price,pd:price?'$'+price:t('askPrice'),foto:(p.fotos&&p.fotos.length)?p.fotos[0]:''});
   cartRender();
   var btn=document.getElementById('cb2-'+id);
   if(btn){var o=btn.textContent;btn.textContent='✓';btn.style.background='var(--red)';btn.style.color='#fff';setTimeout(function(){btn.textContent=o;btn.style.background='';btn.style.color='';},1000);}
@@ -511,7 +520,7 @@ function modalCart(){
   if(!curProduct)return;
   var p=curProduct;
   var price=parseFloat(p.discount_price||p.precio||0);
-  cart.push({id:Date.now(),name:p.nombre,cat:cn(p.categoria),price:price,pd:price?'$'+price:t('askPrice')});
+  cart.push({id:Date.now(),name:p.nombre,cat:cn(p.categoria),price:price,pd:price?'$'+price:t('askPrice'),foto:(p.fotos&&p.fotos.length)?p.fotos[0]:''});
   cartRender();
   var btn=document.querySelector('.m-btn-cart');
   if(btn){btn.textContent='✓ '+(lang==='es'?'Agregado!':'Added!');setTimeout(function(){btn.textContent='+ '+(lang==='es'?'Agregar al carrito':'Add to cart');},1200);}
@@ -531,7 +540,7 @@ function cartRender(){
 function cartRemove(id){cart=cart.filter(function(i){return i.id!==id;});cartRender();}
 function cartOpen(){document.getElementById('cartOverlay').classList.add('open');cartRender();}
 function cartClose(){document.getElementById('cartOverlay').classList.remove('open');}
-function buildMsg(i,o){var m=i;cart.forEach(function(c){m+='- '+c.name+' — '+c.pd+'\n';});var tt=cart.reduce(function(s,c){return s+c.price;},0);return m+'\nTotal: '+(tt?'$'+tt:'TBD')+'\n\n'+o;}
+function buildMsg(i,o){var m=i;cart.forEach(function(c,idx){m+=(idx+1)+') '+c.name+' — '+c.pd+'\n';if(c.foto)m+='🔗 '+c.foto+'\n';m+='\n';});var tt=cart.reduce(function(s,c){return s+c.price;},0);return m+'Total: '+(tt?'$'+tt:'TBD')+'\n\n'+o;}
 function cartAsk(){window.open('https://wa.me/14072833785?text='+encodeURIComponent(buildMsg(lang==='es'?'Hola Zerufy! Quiero consultar:\n\n':'Hi Zerufy! Checking availability:\n\n',lang==='es'?'¿Están disponibles?':'Are these available?')),'_blank');}
 function cartOrder(){window.open('https://wa.me/14072833785?text='+encodeURIComponent(buildMsg(lang==='es'?'Hola Zerufy! Mi pedido:\n\n':'Hi Zerufy! My order:\n\n',lang==='es'?'¿Podemos proceder?':'Can we proceed?')),'_blank');}
 
