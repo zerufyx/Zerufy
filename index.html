@@ -405,9 +405,15 @@ async function translateDynamic() {
 function buildTicker(){
   var order=['bags','wallets','shoes','clothes','belts','caps','watches','sunglasses','jewelry','electronics'];
   var dict = lang==='es'?ES:EN;
-  var one = order.map(function(c){return '<span>'+(dict[c]||c).toUpperCase()+'</span><span class="ticker-sep">◆</span>';}).join('');
+  var one = order.map(function(c){return '<span>'+(dict[c]||c).toUpperCase()+'</span><span class="ticker-sep">\u25C6</span>';}).join('');
   var el=document.getElementById('tickerInner');
-  if(el) el.innerHTML = one+one;
+  if(el){
+    el.innerHTML = one+one;
+    // restart animation cleanly
+    el.style.animation='none';
+    void el.offsetWidth;
+    el.style.animation='ticker 22s linear infinite';
+  }
 }
 
 function setLang(l) {
