@@ -601,15 +601,15 @@ function openModal(id){
   var firstOk = chipsEl.querySelector('.size-chip:not([disabled])');
   if (firstOk){ firstOk.classList.add('active'); curSizeSel = firstOk.dataset.s; }
 
-  var fotoLink = mSrcs.length ? mSrcs[0] : '';
+  var shortLink = location.origin + location.pathname + '?p=' + p.id;
   var precioTxt = p.price ? ' — $'+(p.discount_price||p.price) : '';
   var msg;
   if (lang==='es'){
     msg = 'Hola '+store.name+'! 👋 Me interesa este producto:\n\n'+p.name+precioTxt+'\n\n¿Está disponible?';
-    if (fotoLink) msg += '\n\n🔗 Foto: '+fotoLink;
+    msg += '\n\n🔗 Ver producto: '+shortLink;
   } else {
     msg = 'Hi '+store.name+'! 👋 I am interested in this product:\n\n'+p.name+precioTxt+'\n\nIs it available?';
-    if (fotoLink) msg += '\n\n🔗 Photo: '+fotoLink;
+    msg += '\n\n🔗 View product: '+shortLink;
   }
   var ah = '';
   if (p.sold_out) ah='<div class="m-btn m-btn-off">'+t('soldOut')+'</div>';
