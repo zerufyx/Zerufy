@@ -634,15 +634,15 @@ async function bulkSoldOut(val) {
   await loadProducts();
 }
 async function bulkPrice() {
-  const pct = prompt('¿Cuánto cambia el precio? Ej: 10 para +10%, -15 para -15%');
-  if (pct===null || pct.trim()==='') return;
-  const factor = 1 + (parseFloat(pct)/100);
-  if (isNaN(factor)) { alert('Número no válido'); return; }
+  const monto = prompt('¿Cuánto quieres subir o bajar el precio? Ej: 10 sube $10, -5 baja $5');
+  if (monto===null || monto.trim()==='') return;
+  const cambio = parseFloat(monto);
+  if (isNaN(cambio)) { alert('Escribe un número. Ej: 10 o -5'); return; }
   const ids = Object.keys(selectedIds).map(Number);
   for (let i=0;i<ids.length;i++){
     const p = allProducts.find(function(x){ return x.id === ids[i]; });
     if (!p || !p.price) continue;
-    const newPrice = Math.round(p.price * factor * 100)/100;
+    const newPrice = Math.max(0, Math.round((p.price + cambio) * 100)/100);
     await sb.from('products').update({price:newPrice}).eq('id', ids[i]).eq('store_id', STORE_ID);
   }
   clearSelection();
