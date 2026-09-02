@@ -730,7 +730,10 @@ function renderOrders() {
 
   el.innerHTML = list.map(function(o){
     const items = Array.isArray(o.items) ? o.items : [];
-    const itemsHtml = items.map(function(i){ return '• '+(i.qty||1)+'x '+escapeHtml(i.name)+(i.size?' ('+escapeHtml(i.size)+')':'')+' — $'+i.price; }).join('<br>');
+    const itemsHtml = items.map(function(i){
+      var thumb = i.image ? '<img src="'+escapeHtml(i.image)+'" style="width:32px;height:32px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;">' : '';
+      return '<div style="display:flex;align-items:center;margin-bottom:4px">'+thumb+'<span>'+(i.qty||1)+'x '+escapeHtml(i.name)+(i.size?' ('+escapeHtml(i.size)+')':'')+' — $'+i.price+'</span></div>';
+    }).join('');
     const place = o.note==='Envío' ? ('📦 '+escapeHtml(o.customer_address||'')) : '🤝 Personal (coordinar)';
     const date = o.created_at ? new Date(o.created_at).toLocaleString('es', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     const options = ['pendiente','pagado','enviado','cancelado'].map(function(s){
@@ -743,13 +746,22 @@ function renderOrders() {
       + '<div class="order-addr">'+place+'</div>'
       + '<div class="order-items">'+itemsHtml+'</div>'
       + '<div class="order-foot"><span class="order-total">$'+o.total+'</span>'
-        + '<select class="search-select" data-id="'+o.id+'" onchange="updateOrderStatus(this)">'+options+'</select></div>'
+        + '<div style="display:flex;gap:6px;align-items:center">'
+        + '<select class="search-select" data-id="'+o.id+'" onchange="updateOrderStatus(this)">'+options+'</select>'
+        + '<button class="btn btn-gray" style="padding:8px 10px" onclick="deleteOrder('+o.id+',\''+escapeHtml(o.order_number)+'\')">🗑</button>'
+        + '</div></div>'
     + '</div>';
   }).join('');
 }
 async function updateOrderStatus(sel) {
   await sb.from('orders').update({status:sel.value}).eq('id', Number(sel.dataset.id)).eq('store_id', STORE_ID);
 }
+async function deleteOrder(id, num) {
+  if (!confirm('¿Borrar el pedido '+num+'? No se puede deshacer.')) return;
+  await sb.from('orders').delete().eq('id', id).eq('store_id', STORE_ID);
+  await loadOrders();
+}
 </script>
+
 </body>
 </html>
