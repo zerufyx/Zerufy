@@ -742,7 +742,7 @@ async function submitOrder(){
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> '+t('chkSending');
 
-  var items = cart.map(function(c){ return {product_id:c.pid, name:c.name, size:c.size, price:c.price}; });
+  var items = cart.map(function(c){ return {product_id:c.pid, name:c.name, size:c.size, price:c.price, image:c.foto||''}; });
   var total = cart.reduce(function(s,i){ return s+i.price; }, 0);
   var isShip = checkoutMode==='envio';
 
