@@ -8,7 +8,9 @@ Catálogo de Zerufy (reventa de lujo y streetwear). **En línea: https://zerufy.
 | `admin.html` | Panel para subir productos, precios, fotos y ver pedidos |
 | `stock.html` | Herramienta de inventario (no está enlazada desde el sitio) |
 | `tracker.html` | Herramienta de control personal; guarda los datos en el navegador |
-| `CNAME` | Dominio zerufy.store |
+| `CNAME` | Dominio zerufy.store para GitHub Pages. Se quita al apagar GitHub Pages (Fase 3 de la mudanza) |
+
+**Hosting:** Cloudflare Pages, proyecto `zerufy` (también en https://zerufy.pages.dev). El dominio está en Namecheap con los nameservers de Cloudflare. Cada cambio en `main` se publica solo. Cloudflare quita el `.html` de las direcciones (admin.html → /admin).
 
 **Supabase:** sistema de Tiendas, `store_id = 2` (tablas `stores`, `categories`, `products`, `product_variants`, `orders`). Fotos en los buckets `store-products` y `zerufy-products`. Solo se usa la llave pública.
 
