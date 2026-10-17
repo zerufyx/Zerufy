@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zerufy — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <style>
 :root { --red:#e8352a; --black:#000; --card:#0f0f0f; --border:rgba(232,53,42,.2); --gray:#888; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -436,9 +436,10 @@ function updateToggle(id, valId) {
 
 function previewPhotos(input) {
   const files = Array.prototype.slice.call(input.files);
-  const total = existingImages.length + pendingFiles.length + files.length;
-  if (total > 3) { alert('Máximo 3 fotos por producto'); input.value = ''; return; }
-  pendingFiles = pendingFiles.concat(files);
+  const libres = 3 - existingImages.length - pendingFiles.length;
+  if (libres <= 0) { alert('Este producto ya tiene 3 fotos. Borra una (✕) para agregar otra.'); input.value = ''; return; }
+  if (files.length > libres) alert('Máximo 3 fotos por producto. Se agregaron solo las primeras ' + libres + '.');
+  pendingFiles = pendingFiles.concat(files.slice(0, libres));
   renderPreviews();
   input.value = '';
 }
@@ -456,32 +457,77 @@ function renderPreviews() {
 function removeExistingPhoto(idx) { existingImages.splice(idx,1); renderPreviews(); }
 function removePendingPhoto(idx) { pendingFiles.splice(idx,1); renderPreviews(); }
 
-function compressImage(file) {
+// Lee la foto sin convertirla a texto gigante (eso fallaba con fotos grandes del iPhone).
+function loadViaImg(file) {
   return new Promise(function(resolve, reject){
+    const url = URL.createObjectURL(file);
     const img = new Image();
-    const reader = new FileReader();
-    reader.onload = function(e){ img.src = e.target.result; };
-    reader.onerror = reject;
-    img.onload = function(){
-      const maxW = 1200;
-      const scale = Math.min(1, maxW / img.width);
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      canvas.toBlob(function(blob){ blob ? resolve(blob) : reject(new Error('compress failed')); }, 'image/jpeg', 0.82);
-    };
-    img.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onload = function(){ resolve({ src: img, w: img.naturalWidth, h: img.naturalHeight, done: function(){ URL.revokeObjectURL(url); } }); };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('no se pudo leer')); };
+    img.src = url;
   });
+}
+function loadPhoto(file) {
+  if (window.createImageBitmap) {
+    let p;
+    try { p = createImageBitmap(file, { imageOrientation: 'from-image' }); }
+    catch(e) { p = Promise.reject(e); }
+    return p.then(function(bmp){
+      return { src: bmp, w: bmp.width, h: bmp.height, done: function(){ if (bmp.close) bmp.close(); } };
+    }).catch(function(){ return loadViaImg(file); });
+  }
+  return loadViaImg(file);
+}
+function canvasToBlob(canvas) {
+  return new Promise(function(resolve){
+    try { canvas.toBlob(function(b){ resolve(b); }, 'image/jpeg', 0.82); }
+    catch(e) { resolve(null); }
+  }).then(function(blob){
+    if (blob) return blob;
+    const data = canvas.toDataURL('image/jpeg', 0.82);
+    const bin = atob(data.split(',')[1]);
+    const arr = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: 'image/jpeg' });
+  });
+}
+async function compressImage(file) {
+  let pic;
+  try { pic = await loadPhoto(file); }
+  catch(e) {
+    // Si el teléfono no deja procesarla, se sube la original si es un formato que todos ven.
+    if (/^image\/(jpeg|png|webp)$/.test(file.type) && file.size < 8*1024*1024) return file;
+    const err = new Error('foto'); err.step = 'foto'; throw err;
+  }
+  const maxW = 1200;
+  const scale = Math.min(1, maxW / pic.w);
+  const w = Math.max(1, Math.round(pic.w * scale)), h = Math.max(1, Math.round(pic.h * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(pic.src, 0, 0, w, h);
+  pic.done();
+  const blob = await canvasToBlob(canvas);
+  canvas.width = 0; canvas.height = 0; // libera memoria en iPhone
+  return blob;
 }
 
 async function uploadImage(file) {
   const blob = await compressImage(file);
-  const path = STORE_ID + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.jpg';
-  const up = await sb.storage.from('store-products').upload(path, blob, {contentType:'image/jpeg'});
-  if (up.error) throw up.error;
+  const type = blob.type || 'image/jpeg';
+  const ext = type === 'image/png' ? '.png' : type === 'image/webp' ? '.webp' : '.jpg';
+  const path = STORE_ID + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + ext;
+  const up = await sb.storage.from('store-products').upload(path, blob, {contentType:type});
+  if (up.error) { up.error.step = 'subida'; throw up.error; }
   return sb.storage.from('store-products').getPublicUrl(path).data.publicUrl;
+}
+
+function saveErrorText(e) {
+  const msg = String((e && (e.message || e.error_description || e.error)) || e || '');
+  if (e && e.step === 'foto') return 'Una de las fotos no se pudo leer. Prueba con otra foto o toma captura de pantalla de esa foto y súbela.';
+  if (/jwt|token|session|row-level security|permission denied|401|403/i.test(msg)) return 'Tu sesión se venció. Toca "Salir", vuelve a entrar y guarda otra vez.';
+  if (/fetch|network|load failed/i.test(msg)) return 'Sin conexión. Revisa el internet y vuelve a tocar Guardar.';
+  if (e && e.step === 'subida') return 'No se pudo subir la foto: ' + msg;
+  return 'No se pudo guardar: ' + msg;
 }
 
 async function saveProduct() {
@@ -494,6 +540,9 @@ async function saveProduct() {
   btn.disabled = true;
 
   try {
+    const ses = await sb.auth.getSession();
+    if (!ses.data || !ses.data.session) throw new Error('session');
+
     let images = existingImages.slice();
     for (let i=0;i<pendingFiles.length;i++) { images.push(await uploadImage(pendingFiles[i])); }
 
@@ -535,8 +584,10 @@ async function saveProduct() {
     await loadProducts();
   } catch(e) {
     console.error(e);
+    const txt = saveErrorText(e);
     status.className = 'status error';
-    status.textContent = 'Error al guardar';
+    status.textContent = txt;
+    alert(txt);
   }
   btn.disabled = false;
 }
